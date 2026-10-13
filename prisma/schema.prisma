@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AgentStatus {
+  AVAILABLE
+  BUSY
+  OFFLINE
+}
+
+enum WorkflowStatus {
+  QUEUED
+  RUNNING
+  PAUSED
+  COMPLETED
+  FAILED
+}
+
+enum TaskStatus {
+  QUEUED
+  RUNNING
+  BLOCKED
+  COMPLETED
+  FAILED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  description String
+  repository  String
+  jiraUrl     String
+  demoMode    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  workflows   WorkflowRun[]
+}
+
+model Agent {
+  id               String          @id @default(cuid())
+  slug             String          @unique
+  name             String
+  role             String
+  status           AgentStatus     @default(AVAILABLE)
+  capabilities     String[]
+  modelPreferences String[]
+  permissions      String[]
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  assignments      WorkflowTask[]
+  usageRecords     UsageRecord[]
+}
+
+model WorkflowRun {
+  id                String          @id @default(cuid())
+  projectId         String
+  status            WorkflowStatus  @default(QUEUED)
+  name              String
+  demoMode          Boolean         @default(true)
+  totalBudgetUsd    Decimal         @default(0)
+  spentUsd          Decimal         @default(0)
+  maxRetries        Int             @default(2)
+  currentStep       Int             @default(0)
+  lastFailureReason String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  project           Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks             WorkflowTask[]
+  approvals         Approval[]
+  logs              ExecutionLog[]
+  usageRecords      UsageRecord[]
+}
+
+model WorkflowTask {
+  id              String       @id @default(cuid())
+  workflowRunId   String
+  agentId         String
+  title           String
+  description     String
+  sequence        Int
+  status          TaskStatus   @default(QUEUED)
+  requiresApproval Boolean     @default(false)
+  retries         Int          @default(0)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  workflowRun     WorkflowRun  @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+  agent           Agent        @relation(fields: [agentId], references: [id], onDelete: Restrict)
+  approvals       Approval[]
+
+  @@unique([workflowRunId, sequence])
+}
+
+model Approval {
+  id             String         @id @default(cuid())
+  workflowRunId  String
+  workflowTaskId String
+  status         ApprovalStatus @default(PENDING)
+  proposedAction String
+  impactSummary  String
+  decidedBy      String?
+  decidedAt      DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  workflowRun    WorkflowRun    @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+  workflowTask   WorkflowTask   @relation(fields: [workflowTaskId], references: [id], onDelete: Cascade)
+}
+
+model ExecutionLog {
+  id            String      @id @default(cuid())
+  workflowRunId String
+  level         String
+  message       String
+  metadata      Json?
+  createdAt     DateTime    @default(now())
+  workflowRun   WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+}
+
+model UsageRecord {
+  id            String      @id @default(cuid())
+  workflowRunId String
+  agentId       String
+  provider      String
+  model         String
+  promptTokens  Int
+  completionTokens Int
+  estimatedCostUsd Decimal   @default(0)
+  createdAt     DateTime    @default(now())
+  workflowRun   WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+  agent         Agent       @relation(fields: [agentId], references: [id], onDelete: Restrict)
+}
+
+model ProviderConfig {
+  id              String   @id @default(cuid())
+  provider         String   @unique
+  enabled          Boolean  @default(false)
+  dailyLimitUsd    Decimal  @default(0)
+  perTaskLimitUsd  Decimal  @default(0)
+  budgetExhausted  Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}

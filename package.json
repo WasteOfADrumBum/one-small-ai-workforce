@@ -1,0 +1,48 @@
+{
+  "name": "one-small-ai-workforce",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "format": "prettier --check .",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "db:seed": "node prisma/seed.mjs",
+    "prebuild": "prisma generate",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@onesmall/ui": "^0.1.0",
+    "@prisma/client": "^6.16.2",
+    "next": "16.4.0",
+    "next-auth": "^4.24.15",
+    "prisma": "^6.16.2",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.0",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^3.2.6",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.0",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.9.10",
+    "typescript": "^5",
+    "vitest": "^3.2.6"
+  },
+  "engines": {
+    "node": ">=24.15.0"
+  }
+}
