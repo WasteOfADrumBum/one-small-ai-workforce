@@ -1,69 +1,122 @@
-import Image from "next/image";
+import { Badge, Card, CardBody, CardHeader, Table } from "@onesmall/ui";
+import { WorkflowControls } from "@/components/workflow-controls";
+import { getDashboardData } from "@/lib/dashboard-data";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function DashboardPage() {
+  const { project, agents, latestRun, pendingApprovals, usageRecords, providers, statusMap } =
+    await getDashboardData();
+
+  const totalCost = usageRecords.reduce((sum, record) => sum + Number(record.estimatedCostUsd), 0);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="osaw-stack">
+      <Card>
+        <CardHeader>
+          <h2>Operations Dashboard</h2>
+          <p>
+            Coordinating specialized simulated agents for <strong>{project?.name ?? "TaskForge"}</strong>.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        </CardHeader>
+        <CardBody>
+          <WorkflowControls projectSlug="taskforge" runId={latestRun?.id} />
+        </CardBody>
+      </Card>
+
+      <section className="osaw-grid" aria-label="Summary cards">
+        <Card>
+          <CardHeader>
+            <h3>Workflow status</h3>
+          </CardHeader>
+          <CardBody>
+            <p>Queued: {statusMap.QUEUED}</p>
+            <p>Running: {statusMap.RUNNING}</p>
+            <p>Paused: {statusMap.PAUSED}</p>
+            <p>Completed: {statusMap.COMPLETED}</p>
+            <p>Failed: {statusMap.FAILED}</p>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardHeader>
+            <h3>Agents</h3>
+          </CardHeader>
+          <CardBody>
+            <p>Total agents: {agents.length}</p>
+            <p>Available: {agents.filter((agent) => agent.status === "AVAILABLE").length}</p>
+            <p>Busy: {agents.filter((agent) => agent.status === "BUSY").length}</p>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardHeader>
+            <h3>Pending approvals</h3>
+          </CardHeader>
+          <CardBody>
+            <p>{pendingApprovals.length} pending human decisions.</p>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardHeader>
+            <h3>Usage overview</h3>
+          </CardHeader>
+          <CardBody>
+            <p>Usage events: {usageRecords.length}</p>
+            <p>Estimated spend: ${totalCost.toFixed(2)}</p>
+            <Badge color="warning" variant="soft">
+              Demo data, no paid provider calls
+            </Badge>
+          </CardBody>
+        </Card>
+      </section>
+
+      <section className="osaw-grid">
+        <Card>
+          <CardHeader>
+            <h3>Current workflow</h3>
+          </CardHeader>
+          <CardBody>
+            {latestRun ? (
+              <ol>
+                {latestRun.tasks.map((task) => (
+                  <li key={task.id}>
+                    <strong>{task.title}</strong> — {task.status} ({task.agent.name})
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p>No runs yet. Sign in and start a simulation.</p>
+            )}
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <h3>Provider budget controls</h3>
+          </CardHeader>
+          <CardBody>
+            <Table>
+              <thead>
+                <tr>
+                  <th>Provider</th>
+                  <th>Enabled</th>
+                  <th>Daily limit</th>
+                  <th>Per task</th>
+                </tr>
+              </thead>
+              <tbody>
+                {providers.map((provider) => (
+                  <tr key={provider.id}>
+                    <td>{provider.provider}</td>
+                    <td>{provider.enabled ? "Yes" : "No"}</td>
+                    <td>${Number(provider.dailyLimitUsd).toFixed(2)}</td>
+                    <td>${Number(provider.perTaskLimitUsd).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </CardBody>
+        </Card>
+      </section>
     </div>
   );
 }

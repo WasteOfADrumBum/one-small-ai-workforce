@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# One Small AI Workforce (Phase 1 Foundation)
 
-## Getting Started
+One Small AI Workforce is a production-minded operations platform for coordinating specialized AI agents that progressively improve TaskForge.
 
-First, run the development server:
+This Phase 1 delivery is a deterministic, persisted simulation: it demonstrates architecture, orchestration, approvals, and observability without making paid model calls or writing to external systems.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Tech stack
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Next.js App Router + React + TypeScript (strict)
+- One Small UI (`@onesmall/ui`)
+- PostgreSQL + Prisma
+- Auth.js (NextAuth credentials for demo mode)
+- Zod validation
+- Vitest + React Testing Library
+- Playwright e2e smoke test
+- ESLint + Prettier
+- GitHub Actions CI
+- Vercel config
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Install dependencies:
 
-## Learn More
+   ```bash
+   npm install
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. Configure environment:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```bash
+   cp .env.example .env
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. Create a PostgreSQL database and set `DATABASE_URL`.
 
-## Deploy on Vercel
+4. Apply schema and seed demo data:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   ```bash
+   npx prisma migrate deploy
+   npm run db:seed
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+5. Start the app:
+
+   ```bash
+   npm run dev
+   ```
+
+6. Open `http://localhost:3000`.
+
+## Demo flow
+
+- Sign in with demo credentials from `.env`.
+- Start a simulated workflow from the dashboard.
+- Step execution forward one stage at a time.
+- Review and approve/reject pending actions in the Approval Center.
+- Inspect logs, usage, and budget controls in Observability.
+
+## What is real in this PR
+
+- Responsive multi-page interface for dashboard, agents, workflows, projects, approvals, observability.
+- Typed agent/task/provider contracts.
+- Persisted workflow runs, tasks, approvals, logs, and usage records via Prisma models.
+- Deterministic orchestration logic and explicit approval checkpoints.
+- Budget enforcement scaffold with disabled-by-default providers and `$0` defaults.
+- Read-only adapter interfaces for TaskForge GitHub and Jira targets.
+- Unit tests for budget and workflow transition logic.
+- CI workflow for lint/test/build.
+
+## What is simulated
+
+- Agent execution behavior and outputs.
+- Token usage and cost records.
+- TaskForge GitHub/Jira API responses.
+
+## Not yet implemented
+
+- Live credentialed GitHub/Jira synchronization.
+- Real LLM provider execution and model routing in production.
+- Isolated coding workers with filesystem + Git permissions.
+- Autonomous merges or deployments.
+
+## Additional documentation
+
+- Architecture: [`docs/architecture.md`](./docs/architecture.md)
